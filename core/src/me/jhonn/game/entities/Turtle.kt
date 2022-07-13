@@ -37,8 +37,8 @@ class Turtle(x: Float, y: Float, stage: Stage) : BaseActor(x, y, stage) {
         applyPhysics(delta)
 
         animationPaused = !isMoving()
-        if (getSpeed()>0){
-            rotation = getMotionAngle()
+        if (speed>0){
+            rotation = motionAngle
         }
     }
 }

@@ -14,33 +14,25 @@ import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Polygon
 import com.badlogic.gdx.math.Intersector
+import com.badlogic.gdx.math.Intersector.MinimumTranslationVector;
+
 
 open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
 
-    private var animation: Animation<TextureRegion>? = null
-        set(animation) {
-            field = animation
-            val tr: TextureRegion = field!!.getKeyFrame(0f)
-            val w: Float = tr.regionWidth.toFloat()
-            val h: Float = tr.regionHeight.toFloat()
-            setSize(w, h)
-            setOrigin(w / 2, h / 2)
-
-        }
     private var elapsedTime: Float = 0f
     var animationPaused: Boolean = false
-    private val velocityVec: Vector2
-    private val accelerationVec: Vector2
+
+    private val velocityVec: Vector2 = Vector2(0f, 0f)
+    private val accelerationVec: Vector2 = Vector2(0f, 0f)
+
     var acceleration: Float = 0f
-    var deceleration = 0f
+    var deceleration = 200f
     var maxSpeed = 1000f
 
 
     init {
         this.setPosition(x, y)
         stage.addActor(this)
-        velocityVec = Vector2(0f, 0f)
-        accelerationVec = Vector2(0f, 0f)
     }
 
     var boundaryPolygon: Polygon = createBoundaryRectangle()
@@ -52,7 +44,7 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
             return field
         }
 
-    fun createBoundaryRectangle():Polygon {
+    fun createBoundaryRectangle(): Polygon {
         val w = width
         val h = height
         val vertices: FloatArray = floatArrayOf(0f, 0f, w, 0f, w, h, 0f, h)
@@ -95,29 +87,44 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
 
     }
 
-    fun setSpeed(speed: Float) {
-        // if length is zero, then assume motion angle is zero degrees
-        if (velocityVec.len() == 0f) {
-            velocityVec.set(speed, 0f)
-        } else {
-            velocityVec.setLength(speed)
+    fun preventOverlap(other: BaseActor): Vector2? {
+        val poly1 = boundaryPolygon
+        val poly2 = other.boundaryPolygon
+
+        if (!poly1.boundingRectangle.overlaps(poly2.boundingRectangle)) {
+            return null
         }
+        val mtv = MinimumTranslationVector()
+        val polygonOverlap = Intersector.overlapConvexPolygons(poly1, poly2, mtv)
+        if (!polygonOverlap) {
+            return null
+        }
+        this.moveBy(mtv.normal.x * mtv.depth, mtv.normal.y * mtv.depth)
+        return mtv.normal
     }
 
-    fun getSpeed(): Float {
-        return velocityVec.len()
-    }
+    var speed: Float
+        get() {
+            return velocityVec.len()
+        }
+        set(value) {
+            // if length is zero, then assume motion angle is zero degrees
+            if (velocityVec.len() == 0f) {
+                velocityVec.set(value, 0f)
+            } else {
+                velocityVec.setLength(value)
+            }
+        }
 
-    fun setMotionAngle(angle: Float) {
-        velocityVec.setAngleDeg(angle)
-    }
+    var motionAngle: Float
+        get() = velocityVec.angleDeg()
+        set(angle) {
+            velocityVec.setAngleDeg(angle)
+        }
 
-    fun getMotionAngle(): Float {
-        return velocityVec.angleDeg()
-    }
 
     fun isMoving(): Boolean {
-        return getSpeed() > 0
+        return speed > 0
     }
 
     override fun act(delta: Float) {
@@ -140,7 +147,7 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
         // apply acceleration
         velocityVec.add(accelerationVec.x * delta, accelerationVec.y * delta)
 
-        var speed = getSpeed()
+        var speed = speed
 
         // decrease speed (decelerate) when not accelerating
         if (accelerationVec.len() == 0f) {
@@ -151,7 +158,7 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
         speed = MathUtils.clamp(speed, 0f, maxSpeed)
 
         // update velocity
-        setSpeed(speed)
+        this.speed = speed
 
         // apply velocity
         moveBy(velocityVec.x * delta, velocityVec.y * delta)
@@ -166,21 +173,22 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
         // apply color tint effect
         val c: Color = color
         batch.setColor(c.r, c.g, c.b, c.a)
+        val frame = animation!!.getKeyFrame(elapsedTime)
         if (animation != null && isVisible) {
-            batch.draw(
-                animation!!.getKeyFrame(elapsedTime),
-                x,
-                y,
-                originX,
-                originY,
-                width,
-                height,
-                scaleX,
-                scaleY,
-                rotation
-            )
+            batch.draw(frame, x, y, originX, originY, width, height, scaleX, scaleY, rotation)
         }
     }
+
+    private var animation: Animation<TextureRegion>? = null
+        set(animation) {
+            field = animation
+            val tr: TextureRegion = field!!.getKeyFrame(0f)
+            val w: Float = tr.regionWidth.toFloat()
+            val h: Float = tr.regionHeight.toFloat()
+            setSize(w, h)
+            setOrigin(w / 2, h / 2)
+
+        }
 
     fun loadAnimationFromFiles(
         fileNames: kotlin.Array<String>,
