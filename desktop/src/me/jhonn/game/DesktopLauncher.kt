@@ -7,7 +7,7 @@ import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration
 object DesktopLauncher {
     @JvmStatic
     fun main(arg: Array<String>) {
-        val myGame = StarfishCollector()
+        val myGame = StarfishGame()
         val config = Lwjgl3ApplicationConfiguration()
         config.setTitle("Starfish Collector")
         config.setWindowedMode(800,600)

@@ -12,9 +12,9 @@ class Turtle(x: Float, y: Float, stage: Stage) : BaseActor(x, y, stage) {
             "turtle-4.png", "turtle-5.png", "turtle-6.png"
         )
         loadAnimationFromFiles(filenames, 0.1f, true)
-        acceleration = 400f
-        maxSpeed = 100f
-        deceleration = 400f
+        acceleration = 300f
+        maxSpeed = 150f
+        deceleration = 100f
        boundaryPolygon =  createBoundaryPolygon(8)
 
 

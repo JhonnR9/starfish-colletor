@@ -4,36 +4,32 @@ import com.badlogic.gdx.scenes.scene2d.actions.Actions
 import me.jhonn.game.entities.*
 import kotlin.random.Random
 
-class StarfishCollector : GameBeta() {
-    private lateinit var turtle: Turtle
+class LevelScreen: BaseScreen() {
+    private val turtle: Turtle
     private var win: Boolean = false
-    lateinit var ocean: BaseActor
+    var ocean: BaseActor = BaseActor(0f, 0f, mainStage)
 
+    init {
+        ocean.apply {
+            loadTexture("water-border.jpg")
+            setSize(1200f, 900f)
+            BaseActor.createWorldBounds(ocean)
+        }
 
-    override fun initialize() {
-        ocean = BaseActor(0f, 0f, mainStage)
-        ocean.loadTexture("water-border.jpg")
-        ocean.setSize(1200f, 900f)
-        BaseActor.createWorldBounds(ocean)
-
-
-        for (i in 0..12) {
-            Starfish(randonX(), randonY(), mainStage).boundToWorld()
+        for (i in 0..5) {
+            Starfish(randomX(), randomY(), mainStage).boundToWorld()
         }
         for (i in 0..5) {
-            Rock(randonX(), randonY(), mainStage).boundToWorld()
+            Rock(randomX(), randomY(), mainStage).boundToWorld()
         }
 
-
-
-        turtle = Turtle(200f, 20f, mainStage)
+        turtle = Turtle(300f, 400f, mainStage)
     }
-
-    private fun randonX(): Float {
+    private fun randomX(): Float {
         return Random.nextInt(0, ocean.width.toInt()).toFloat()
     }
 
-    fun randonY(): Float {
+    private fun randomY(): Float {
         return Random.nextInt(0, ocean.height.toInt()).toFloat()
     }
 
@@ -51,7 +47,7 @@ class StarfishCollector : GameBeta() {
                     addAction(Actions.fadeOut(1f))
                     addAction(Actions.after(Actions.removeActor()))
 
-                    val whirl = Whirlpool(0f, 0f, mainStage).apply {
+                    Whirlpool(0f, 0f, mainStage).apply {
                         centerAtActor(starfish)
                         setOpacity(0.25f)
                     }
@@ -62,7 +58,7 @@ class StarfishCollector : GameBeta() {
 
         if (BaseActor.count(mainStage, "Starfish") == 0 && !win) {
             win = true
-            val youWinMessage = BaseActor(0f, 0f, mainStage).apply {
+             BaseActor(0f, 0f,uiStage).apply {
                 loadTexture("assets/you-win.png")
                 centerAtPosition(400f, 300f)
                 setOpacity(0f)
@@ -72,7 +68,5 @@ class StarfishCollector : GameBeta() {
             }
 
         }
-
-
     }
 }

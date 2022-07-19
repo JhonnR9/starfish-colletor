@@ -21,6 +21,8 @@ import kotlin.reflect.KClass
 
 open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
 
+
+
     private var elapsedTime: Float = 0f
     var animationPaused: Boolean = false
 
