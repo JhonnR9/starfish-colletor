@@ -7,7 +7,6 @@ import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.NinePatch
-import me.jhonn.game.screens.BaseScreen
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator.FreeTypeFontParameter
 import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle
@@ -15,7 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle
 import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable
 
 abstract class BaseGame : Game() {
-    var game: BaseGame? = null
+
     private var labelStyle: LabelStyle? = null
 
     var textButtonStyle: TextButtonStyle? = null

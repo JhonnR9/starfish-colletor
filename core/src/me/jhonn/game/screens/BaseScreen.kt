@@ -5,15 +5,21 @@ import com.badlogic.gdx.InputProcessor
 import com.badlogic.gdx.Screen
 import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.scenes.scene2d.Stage
+import com.badlogic.gdx.scenes.scene2d.ui.Table
 import me.jhonn.game.BaseGame
 
 abstract class BaseScreen(var game: BaseGame) : Screen, InputProcessor {
     val mainStage: Stage = Stage()
     val uiStage: Stage = Stage()
+    var uiTable = Table()
 
     init {
         if (game.inputMultiplexer.size() == 0) {
             addInputs()
+        }
+        uiTable.apply {
+            setFillParent(true)
+            uiStage.addActor(this)
         }
     }
 

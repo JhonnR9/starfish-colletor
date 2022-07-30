@@ -16,16 +16,17 @@ import me.jhonn.game.entities.BaseActor
 import me.jhonn.game.entities.Turtle
 
 class LevelBonus(game: BaseGame) : BaseScreen(game) {
-    private val turtle : Turtle
+    private val turtle: Turtle
     private var starfishLabel: Label
+
     init {
-        BaseActor(0f,0f,mainStage).apply {
+        BaseActor(0f, 0f, mainStage).apply {
             loadTexture("water-border.jpg")
             setSize(800f, 600f)
             BaseActor.createWorldBounds(this)
             mainStage.addActor(this)
         }
-       turtle = Turtle(20f,50f,mainStage)
+        turtle = Turtle(20f, 50f, mainStage)
 
         val buttonStyle = Button.ButtonStyle().apply {
             val buttonTexture = Texture(Gdx.files.internal("undo.png"))
@@ -52,9 +53,11 @@ class LevelBonus(game: BaseGame) : BaseScreen(game) {
             uiStage.addActor(this)
         }
     }
+
     override fun update(deltaTime: Float) {
 
     }
+
     override fun keyDown(keycode: Int): Boolean {
         if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
             game.screen = LevelScreen(game)

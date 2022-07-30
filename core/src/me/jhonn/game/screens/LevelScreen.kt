@@ -28,6 +28,11 @@ class LevelScreen(game: BaseGame) : BaseScreen(game) {
 
 
     init {
+        val fileHandle: FileHandle = Gdx.files.local("assets/OpenSans.ttf")
+        starfishLabel = Label("Star Left: ", game.getLabelStyle(fileHandle))
+        starfishLabel.color = Color.CYAN
+
+
         val buttonStyle = ButtonStyle().apply {
             val buttonTexture = Texture(Gdx.files.internal("undo.png"))
             val buttonRegion = TextureRegion(buttonTexture)
@@ -35,11 +40,8 @@ class LevelScreen(game: BaseGame) : BaseScreen(game) {
 
         }
 
-         Button(buttonStyle).apply {
+        val restartButton = Button(buttonStyle).apply {
             color = Color.CYAN
-            setPosition(720f, 520f)
-            uiStage.addActor(this)
-
             addListener { e: Event ->
                 if (e !is InputEvent || !e.type.equals(Type.touchDown)) {
                     return@addListener false
@@ -56,34 +58,29 @@ class LevelScreen(game: BaseGame) : BaseScreen(game) {
             mainStage.addActor(this)
         }
 
-        for (i in 1..5) {
-            Starfish(randomX(), randomY(), mainStage).boundToWorld()
-        }
-        for (i in 1..5) {
-            Rock(randomX(), randomY(), mainStage).boundToWorld()
-        }
+
+
+        Starfish(200f, 800f, mainStage)
+        Starfish(600f, 100f, mainStage)
+        Starfish(950f, 700f, mainStage)
+
+        Rock(500f, 527f, mainStage)
+        Rock(150f, 680f, mainStage)
+        Rock(60f, 39f, mainStage)
+        Rock(200f, 240f, mainStage)
+
 
         turtle = Turtle(300f, 400f, mainStage)
         mainStage.addActor(turtle)
-    }
 
-    init {
-        val fileHandle: FileHandle = Gdx.files.local("assets/OpenSans.ttf")
-        starfishLabel = Label("Star Left: ", game.getLabelStyle(fileHandle)).apply {
-            setPosition(20f, 520f)
-            color = Color.CYAN
-            uiStage.addActor(this)
+        uiTable.apply {
+            pad(10f)
+            add(starfishLabel).top()
+            add().expandX().expandY()
+            add(restartButton).top()
+
         }
     }
-
-    private fun randomX(): Float {
-        return Random.nextInt(0, ocean.width.toInt()).toFloat()
-    }
-
-    private fun randomY(): Float {
-        return Random.nextInt(0, ocean.height.toInt()).toFloat()
-    }
-
 
     override fun update(deltaTime: Float) {
         starfishLabel.setText("Star Left: ${BaseActor.count(mainStage, "Starfish")}")
@@ -118,7 +115,7 @@ class LevelScreen(game: BaseGame) : BaseScreen(game) {
                 setOpacity(0f)
                 addAction(Actions.delay(1f))
                 addAction(Actions.after(Actions.fadeIn(1f)))
-                mainStage.addActor(this)
+                uiStage.addActor(this)
             }
 
         }
@@ -126,15 +123,14 @@ class LevelScreen(game: BaseGame) : BaseScreen(game) {
 
     override fun resume() {
         game.screen = MenuScreen(game)
-        super.resume()
     }
 
     override fun keyDown(keycode: Int): Boolean {
-        if (keycode == Keys.E){
+        if (keycode == Keys.E) {
             game.screen = LevelBonus(game)
         }
         if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
-            game.screen = LevelScreen(game)
+            game.screen = MenuScreen(game)
         }
         return false
     }
