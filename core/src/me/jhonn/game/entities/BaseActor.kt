@@ -1,7 +1,6 @@
 package me.jhonn.game.entities
 
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.Texture.TextureFilter.Linear
 import com.badlogic.gdx.graphics.g2d.Animation
@@ -9,6 +8,7 @@ import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.*
 import com.badlogic.gdx.math.Intersector.MinimumTranslationVector
+import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.utils.Array
@@ -16,8 +16,6 @@ import kotlin.reflect.KClass
 
 
 open class BaseActor(x: Float, y: Float, stage: Stage) : Group() {
-
-
     private var elapsedTime: Float = 0f
     var animationPaused: Boolean = false
 
@@ -31,7 +29,6 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Group() {
 
     init {
         this.setPosition(x, y)
-        stage.addActor(this)
     }
 
     companion object {
@@ -69,23 +66,23 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Group() {
     }
 
     fun alignCamera() {
-        val camera = stage.camera
+        stage.camera.apply {
+            position.set(x + originX, y + originY, 0f)
 
-        camera.position.set(x + originX, y + originY, 0f)
+            val minX = viewportWidth / 2
+            val maxX = worldBounds.width - viewportWidth / 2
+            position.x = MathUtils.clamp(position.x, minX, maxX)
 
-        camera.position.x =
-            MathUtils.clamp(camera.position.x, camera.viewportWidth / 2, worldBounds.width - camera.viewportWidth / 2)
-        camera.position.y = MathUtils.clamp(
-            camera.position.y,
-            camera.viewportHeight / 2,
-            worldBounds.height - camera.viewportHeight / 2
-        )
-        camera.update()
+            val minY = viewportHeight / 2
+            val maxY = worldBounds.height - viewportHeight / 2
+            position.y = MathUtils.clamp(position.y, minY, maxY)
 
+            update()
+        }
     }
 
 
-     fun wrapAroundWorld() {
+    fun wrapAroundWorld() {
         if (x + width < 0) {
             x = worldBounds.width
         }
@@ -120,11 +117,12 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Group() {
         get() {
             if (field == null) {
                 field = createBoundaryRectangle()
+            } else {
+                field?.setPosition(x, y)
+                field?.setOrigin(originX, originY)
+                field?.rotation = rotation
+                field?.setScale(scaleX, scaleY)
             }
-            field!!.setPosition(x, y)
-            field!!.setOrigin(originX, originY)
-            field!!.rotation = rotation
-            field!!.setScale(scaleX, scaleY)
             return field
         }
 
@@ -263,17 +261,20 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Group() {
 
     }
 
-    override fun draw(batch: Batch, parentAlpha: Float) {
 
+    override fun draw(batch: Batch, parentAlpha: Float) {
         // apply color tint effect
-        val c: Color = color
-        batch.setColor(c.r, c.g, c.b, c.a)
-        val frame = animation?.getKeyFrame(elapsedTime)
-        if (animation != null && isVisible) {
-            batch.draw(frame, x, y, originX, originY, width, height, scaleX, scaleY, rotation)
-            super.draw(batch, parentAlpha)
+        batch.setColor(color.r, color.g, color.b, color.a)
+        if (animation != null) {
+            val frame = animation!!.getKeyFrame(elapsedTime)
+            if (isVisible) {
+                batch.draw(frame, x, y, originX, originY, width, height, scaleX, scaleY, rotation)
+                super.draw(batch, parentAlpha)
+            }
         }
+
     }
+
 
     private var animation: Animation<TextureRegion>? = null
         set(animation) {
@@ -286,10 +287,9 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Group() {
 
         }
 
+
     fun loadAnimationFromFiles(
-        fileNames: kotlin.Array<String>,
-        frameDuration: Float,
-        loop: Boolean
+        fileNames: kotlin.Array<String>, frameDuration: Float, loop: Boolean
     ): Animation<TextureRegion> {
 
         val textureArray: Array<TextureRegion> = Array<TextureRegion>()
@@ -311,11 +311,7 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Group() {
     }
 
     fun loadAnimationFromSheet(
-        filename: String,
-        rows: Int,
-        cols: Int,
-        frameDuration: Float,
-        loop: Boolean
+        filename: String, rows: Int, cols: Int, frameDuration: Float, loop: Boolean
     ): Animation<TextureRegion> {
         val texture = Texture(Gdx.files.internal(filename))
         texture.setFilter(Linear, Linear)
@@ -332,12 +328,9 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Group() {
         }
 
         val anim: Animation<TextureRegion> = Animation<TextureRegion>(frameDuration, textureArray)
-        if (loop)
-            anim.setPlayMode(Animation.PlayMode.LOOP)
-        else
-            anim.setPlayMode(Animation.PlayMode.NORMAL)
-        if (animation == null)
-            animation = anim
+        if (loop) anim.setPlayMode(Animation.PlayMode.LOOP)
+        else anim.setPlayMode(Animation.PlayMode.NORMAL)
+        if (animation == null) animation = anim
         return anim
 
     }

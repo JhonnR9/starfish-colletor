@@ -7,17 +7,19 @@ import com.badlogic.gdx.graphics.GL20
 import com.badlogic.gdx.scenes.scene2d.Stage
 import me.jhonn.game.BaseGame
 
-abstract class BaseScreen : Screen, InputProcessor {
+abstract class BaseScreen(var game: BaseGame) : Screen, InputProcessor {
     val mainStage: Stage = Stage()
     val uiStage: Stage = Stage()
 
     init {
-        addInputs()
+        if (game.inputMultiplexer.size() == 0) {
+            addInputs()
+        }
     }
 
     abstract fun update(deltaTime: Float)
-    private fun addInputs(){
-        BaseGame.inputMultiplexer.apply {
+    private fun addInputs() {
+        game.inputMultiplexer.apply {
             addProcessor(this@BaseScreen)
             addProcessor(uiStage)
             addProcessor(mainStage)
@@ -29,7 +31,7 @@ abstract class BaseScreen : Screen, InputProcessor {
     }
 
     override fun hide() {
-        BaseGame.inputMultiplexer.apply {
+        game.inputMultiplexer.apply {
             removeProcessor(this@BaseScreen)
             removeProcessor(uiStage)
             removeProcessor(mainStage)

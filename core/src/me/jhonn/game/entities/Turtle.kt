@@ -15,7 +15,8 @@ class Turtle(x: Float, y: Float, stage: Stage) : BaseActor(x, y, stage) {
         acceleration = 300f
         maxSpeed = 150f
         deceleration = 100f
-       boundaryPolygon =  createBoundaryPolygon(8)
+        boundaryPolygon = createBoundaryPolygon(8)
+        stage.addActor(this)
 
 
     }
@@ -37,7 +38,7 @@ class Turtle(x: Float, y: Float, stage: Stage) : BaseActor(x, y, stage) {
         applyPhysics(delta)
 
         animationPaused = !isMoving()
-        if (speed>0){
+        if (speed > 0) {
             rotation = motionAngle
         }
 

@@ -1,6 +1,8 @@
 package me.jhonn.game.screens
 
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.Input
+import com.badlogic.gdx.Input.Keys
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Texture
@@ -18,7 +20,7 @@ import me.jhonn.game.entities.*
 import kotlin.random.Random
 
 
-class LevelScreen : BaseScreen() {
+class LevelScreen(game: BaseGame) : BaseScreen(game) {
     private val turtle: Turtle
     private var win: Boolean = false
     private var ocean: BaseActor = BaseActor(0f, 0f, mainStage)
@@ -30,6 +32,7 @@ class LevelScreen : BaseScreen() {
             val buttonTexture = Texture(Gdx.files.internal("undo.png"))
             val buttonRegion = TextureRegion(buttonTexture)
             up = TextureRegionDrawable(buttonRegion)
+
         }
 
          Button(buttonStyle).apply {
@@ -41,7 +44,7 @@ class LevelScreen : BaseScreen() {
                 if (e !is InputEvent || !e.type.equals(Type.touchDown)) {
                     return@addListener false
                 }
-                BaseGame.setActiveScreen(LevelScreen())
+                game.screen = LevelScreen(game)
                 return@addListener false
             }
         }
@@ -50,6 +53,7 @@ class LevelScreen : BaseScreen() {
             loadTexture("water-border.jpg")
             setSize(1200f, 900f)
             BaseActor.createWorldBounds(ocean)
+            mainStage.addActor(this)
         }
 
         for (i in 1..5) {
@@ -60,12 +64,12 @@ class LevelScreen : BaseScreen() {
         }
 
         turtle = Turtle(300f, 400f, mainStage)
+        mainStage.addActor(turtle)
     }
 
     init {
         val fileHandle: FileHandle = Gdx.files.local("assets/OpenSans.ttf")
-
-        starfishLabel = Label("Star Left: ", BaseGame.getLabelStyle(fileHandle)).apply {
+        starfishLabel = Label("Star Left: ", game.getLabelStyle(fileHandle)).apply {
             setPosition(20f, 520f)
             color = Color.CYAN
             uiStage.addActor(this)
@@ -82,7 +86,7 @@ class LevelScreen : BaseScreen() {
 
 
     override fun update(deltaTime: Float) {
-        starfishLabel.setText("Starfish Left: ${BaseActor.count(mainStage, "Starfish")}")
+        starfishLabel.setText("Star Left: ${BaseActor.count(mainStage, "Starfish")}")
 
         for (rockActor in BaseActor.getList(mainStage, "Rock")) {
             turtle.preventOverlap(rockActor)
@@ -114,15 +118,24 @@ class LevelScreen : BaseScreen() {
                 setOpacity(0f)
                 addAction(Actions.delay(1f))
                 addAction(Actions.after(Actions.fadeIn(1f)))
-
+                mainStage.addActor(this)
             }
 
         }
     }
 
     override fun resume() {
-        println("resume")
-        BaseGame.setActiveScreen(MenuScreen())
+        game.screen = MenuScreen(game)
         super.resume()
+    }
+
+    override fun keyDown(keycode: Int): Boolean {
+        if (keycode == Keys.E){
+            game.screen = LevelBonus(game)
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.ESCAPE)) {
+            game.screen = LevelScreen(game)
+        }
+        return false
     }
 }

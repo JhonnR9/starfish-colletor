@@ -10,6 +10,7 @@ class Starfish(x: Float, y: Float, stage: Stage) : BaseActor(x, y, stage) {
         boundaryPolygon = createBoundaryPolygon(8)
         val spin: Action = Actions.rotateBy(30f, 1f)
         this.addAction(Actions.forever(spin))
+        stage.addActor(this)
     }
 
      var collected = false

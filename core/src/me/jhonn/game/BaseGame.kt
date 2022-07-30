@@ -15,71 +15,58 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle
 import com.badlogic.gdx.scenes.scene2d.utils.NinePatchDrawable
 
 abstract class BaseGame : Game() {
-    companion object {
-        private var labelStyle: LabelStyle? = null
-        var inputMultiplexer: InputMultiplexer = InputMultiplexer()
-        lateinit var game: BaseGame
+    var game: BaseGame? = null
+    private var labelStyle: LabelStyle? = null
 
-        @JvmStatic
-        fun getLabelStyle(fileHandle: FileHandle, fontParameters: FreeTypeFontParameter): LabelStyle {
-            if (labelStyle == null) {
+    var textButtonStyle: TextButtonStyle? = null
+        get() {
+            if (field == null) {
                 try {
-                    val fontGenerator= FreeTypeFontGenerator(fileHandle)
-                    labelStyle = LabelStyle().apply {
-                        font = fontGenerator.generateFont(fontParameters)
+                    field = TextButtonStyle().apply {
+                        val buttonTexture = Texture(Gdx.files.internal("assets/button.png"))
+                        val buttonPatch = NinePatch(buttonTexture, 24, 24, 24, 24)
+                        val fileHandle: FileHandle = Gdx.files.local("assets/OpenSans.ttf")
+                        font = getLabelStyle(fileHandle).font
+                        fontColor = Color.GRAY
+                        up = NinePatchDrawable(buttonPatch)
                     }
-                    return labelStyle as LabelStyle
-                } catch (_: Exception) {
-
+                } catch (e: ExceptionInInitializerError) {
+                    e.printStackTrace()
+                    println("Error")
                 }
             }
-            return labelStyle as LabelStyle
+            return field
         }
 
-        fun getLabelStyle(fileHandle: FileHandle): LabelStyle {
-            val fontParameters =FreeTypeFontParameter().apply {
-                size = 48
-                color = Color.WHITE
-                borderWidth = 2f
-                borderColor = Color.BLACK
-                borderStraight = true
-                minFilter = Texture.TextureFilter.Linear
-                magFilter = Texture.TextureFilter.Linear
+    var inputMultiplexer: InputMultiplexer = InputMultiplexer()
+        get() {
+            if (Gdx.input.inputProcessor !is InputMultiplexer) {
+                Gdx.input.inputProcessor = field
             }
-            return getLabelStyle(fileHandle, fontParameters)
+            return field
         }
 
-        fun setActiveScreen(s: BaseScreen) {
-            if (::game.isInitialized) {
-                game.screen = s
-                Gdx.input.inputProcessor = inputMultiplexer
-            } else {
-                throw UninitializedPropertyAccessException("please initialize the var game in current main GameClass before setter active screen")
-            }
+    fun getLabelStyle(fileHandle: FileHandle, fontParameters: FreeTypeFontParameter): LabelStyle {
+        if (labelStyle == null) {
+            labelStyle = LabelStyle()
         }
+        val fontGenerator = FreeTypeFontGenerator(fileHandle)
+        labelStyle?.font = fontGenerator.generateFont(fontParameters)
 
-        var textButtonStyle: TextButtonStyle? = null
-            get() {
-                if (field == null) {
-                    try {
-                        field = TextButtonStyle().apply {
-                            val buttonTexture = Texture(Gdx.files.internal("assets/button.png"))
-                            val buttonPatch = NinePatch(buttonTexture, 24, 24, 24, 24)
-                            val fileHandle: FileHandle = Gdx.files.local("assets/OpenSans.ttf")
-                            font = getLabelStyle(fileHandle).font
-                            fontColor = Color.GRAY
-                            up = NinePatchDrawable(buttonPatch)
-                        }
-                    } catch (e: ExceptionInInitializerError) {
-                        e.printStackTrace()
-                        println("Error")
-                    }
-                }
-                return field
-            }
-
-
+        return labelStyle as LabelStyle
     }
 
+    fun getLabelStyle(fileHandle: FileHandle): LabelStyle {
+        val fontParameters = FreeTypeFontParameter().apply {
+            size = 48
+            color = Color.WHITE
+            borderWidth = 2f
+            borderColor = Color.BLACK
+            borderStraight = true
+            minFilter = Texture.TextureFilter.Linear
+            magFilter = Texture.TextureFilter.Linear
+        }
+        return getLabelStyle(fileHandle, fontParameters)
+    }
 
 }
