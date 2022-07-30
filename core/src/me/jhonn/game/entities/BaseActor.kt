@@ -1,26 +1,21 @@
 package me.jhonn.game.entities
 
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.Texture.TextureFilter.Linear
 import com.badlogic.gdx.graphics.g2d.Animation
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
-import com.badlogic.gdx.scenes.scene2d.Actor
+import com.badlogic.gdx.math.*
+import com.badlogic.gdx.math.Intersector.MinimumTranslationVector
+import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.graphics.Texture.TextureFilter.Linear
-import com.badlogic.gdx.math.MathUtils
-import com.badlogic.gdx.math.Vector2
-import com.badlogic.gdx.math.Polygon
-import com.badlogic.gdx.math.Intersector
-import com.badlogic.gdx.math.Intersector.MinimumTranslationVector;
-import com.badlogic.gdx.math.Rectangle
+import com.badlogic.gdx.utils.Array
 import kotlin.reflect.KClass
 
 
-open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
-
+open class BaseActor(x: Float, y: Float, stage: Stage) : Group() {
 
 
     private var elapsedTime: Float = 0f
@@ -30,8 +25,8 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
     private val accelerationVec: Vector2 = Vector2(0f, 0f)
 
     var acceleration: Float = 0f
-    var deceleration = 200f
-    var maxSpeed = 1000f
+    var deceleration = 0f
+    var maxSpeed = 300f
 
 
     init {
@@ -46,24 +41,26 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
             worldBounds = Rectangle(0f, 0f, width, height)
         }
 
-        fun createWorldBounds(ba: BaseActor) {
-            createWorldBounds(ba.width, ba.height)
+        fun createWorldBounds(baseActor: BaseActor) {
+            createWorldBounds(baseActor.width, baseActor.height)
         }
 
         fun getList(stage: Stage, className: String): ArrayList<BaseActor> {
             val list = ArrayList<BaseActor>()
-            var theClass: KClass<*>? = null
             try {
-                theClass = Class.forName("me.jhonn.game.entities.$className").kotlin
-            } catch (error: Exception) {
-                error.printStackTrace()
-            }
-            for (actor in stage.actors) {
-                if (theClass!!.isInstance(actor)) {
-                    list.add(actor as BaseActor)
+                val theClass: KClass<*> = Class.forName("me.jhonn.game.entities.$className").kotlin
+                for (actor in stage.actors) {
+                    if (theClass.isInstance(actor)) {
+                        if (actor is BaseActor) {
+                            list.add(actor)
+                        }
+                    }
                 }
+            } catch (error: ClassNotFoundException) {
+                println("the $error class does not exist change the class name!")
             }
             return list
+
         }
 
         fun count(stage: Stage, className: String): Int {
@@ -76,10 +73,31 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
 
         camera.position.set(x + originX, y + originY, 0f)
 
-        camera.position.x = MathUtils.clamp(camera.position.x, camera.viewportWidth/2, worldBounds.width - camera.viewportWidth/2)
-        camera.position.y = MathUtils.clamp(camera.position.y, camera.viewportHeight/2, worldBounds.height- camera.viewportHeight/2)
+        camera.position.x =
+            MathUtils.clamp(camera.position.x, camera.viewportWidth / 2, worldBounds.width - camera.viewportWidth / 2)
+        camera.position.y = MathUtils.clamp(
+            camera.position.y,
+            camera.viewportHeight / 2,
+            worldBounds.height - camera.viewportHeight / 2
+        )
         camera.update()
 
+    }
+
+
+     fun wrapAroundWorld() {
+        if (x + width < 0) {
+            x = worldBounds.width
+        }
+        if (x > worldBounds.width) {
+            x = -width
+        }
+        if (y + height < 0) {
+            y = worldBounds.height
+        }
+        if (y > worldBounds.height) {
+            y = -height
+        }
     }
 
     fun boundToWorld() {
@@ -98,14 +116,18 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
     }
 
 
-    var boundaryPolygon: Polygon = createBoundaryRectangle()
+    var boundaryPolygon: Polygon? = null
         get() {
-            field.setPosition(x, y)
-            field.setOrigin(originX, originY)
-            field.rotation = rotation
-            field.setScale(scaleX, scaleY)
+            if (field == null) {
+                field = createBoundaryRectangle()
+            }
+            field!!.setPosition(x, y)
+            field!!.setOrigin(originX, originY)
+            field!!.rotation = rotation
+            field!!.setScale(scaleX, scaleY)
             return field
         }
+
 
     fun createBoundaryRectangle(): Polygon {
         val w = width
@@ -127,11 +149,17 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
     }
 
     fun overlaps(other: BaseActor): Boolean {
-        val poly1 = boundaryPolygon
-        val poly2 = other.boundaryPolygon
+        val poly1: Polygon? = this.boundaryPolygon
+        val poly2: Polygon? = other.boundaryPolygon
+
         // initial test to improve performance
-        return if (!poly1.boundingRectangle.overlaps(poly2.boundingRectangle)) false
-        else Intersector.overlapConvexPolygons(poly1, poly2)
+        if (poly1 != null && poly2 != null) {
+            return if (!poly1.boundingRectangle.overlaps(poly2.boundingRectangle)) false
+            else Intersector.overlapConvexPolygons(poly1, poly2)
+
+        } else {
+            throw java.lang.NullPointerException("please create boundary rectangle")
+        }
     }
 
 
@@ -154,8 +182,12 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
         val poly1 = boundaryPolygon
         val poly2 = other.boundaryPolygon
 
-        if (!poly1.boundingRectangle.overlaps(poly2.boundingRectangle)) {
-            return null
+        if (poly1 != null && poly2 != null) {
+
+            if (!poly1.boundingRectangle.overlaps(poly2.boundingRectangle)) {
+                return null
+            }
+
         }
         val mtv = MinimumTranslationVector()
         val polygonOverlap = Intersector.overlapConvexPolygons(poly1, poly2, mtv)
@@ -232,13 +264,14 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
     }
 
     override fun draw(batch: Batch, parentAlpha: Float) {
-        super.draw(batch, parentAlpha)
+
         // apply color tint effect
         val c: Color = color
         batch.setColor(c.r, c.g, c.b, c.a)
         val frame = animation?.getKeyFrame(elapsedTime)
         if (animation != null && isVisible) {
             batch.draw(frame, x, y, originX, originY, width, height, scaleX, scaleY, rotation)
+            super.draw(batch, parentAlpha)
         }
     }
 
@@ -300,9 +333,9 @@ open class BaseActor(x: Float, y: Float, stage: Stage) : Actor() {
 
         val anim: Animation<TextureRegion> = Animation<TextureRegion>(frameDuration, textureArray)
         if (loop)
-            anim.setPlayMode(Animation.PlayMode.LOOP);
+            anim.setPlayMode(Animation.PlayMode.LOOP)
         else
-            anim.setPlayMode(Animation.PlayMode.NORMAL);
+            anim.setPlayMode(Animation.PlayMode.NORMAL)
         if (animation == null)
             animation = anim
         return anim
